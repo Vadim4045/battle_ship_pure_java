@@ -11,6 +11,11 @@ public class Pair<T,Y>
         second = s;
     }
 
+    public Pair(Pair<T, Y> pair){
+        this.setFirst(pair.getFirst());
+        this.setSecond(pair.getSecond());
+    }
+
     public T getFirst() {
         return first;
     }

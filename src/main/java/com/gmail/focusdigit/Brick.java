@@ -19,7 +19,7 @@ public class Brick extends JPanel {
 
     protected void paintComponent(Graphics g){
         super.paintComponent(g);
-        g.setColor(Color.lightGray);
+        g.setColor(Color.LIGHT_GRAY);
         g.drawRect(0, 0, brickWidth, brickWidth);
     }
 
@@ -46,6 +46,7 @@ public class Brick extends JPanel {
             default:
                 break;
         }
+        repaint();
     }
 
     public int getBrickWidth() {

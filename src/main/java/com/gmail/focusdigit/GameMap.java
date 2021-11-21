@@ -22,6 +22,10 @@ public class GameMap extends BasicMap implements MouseListener {
         return this.map[place.getFirst()][place.getSecond()];
     }
 
+    public void refresh(){
+        this.revalidate();
+        this.repaint();
+    }
     @Override
     public void mouseClicked(MouseEvent e) {
         Pair p = ((Brick)e.getSource()).getPlace();

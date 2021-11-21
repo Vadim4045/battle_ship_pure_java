@@ -2,39 +2,34 @@ package com.gmail.focusdigit;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
-public class EditMap extends BasicMap implements MouseListener {
+public class EditMap extends BasicMap implements MouseMotionListener {
     EditFrame parent;
     private Pair<Integer, Integer> shipHolder;
-
+    private int brickWidth;
     public EditMap(int rows, int columns, int brickWidth, EditFrame parent) {
         super(rows, columns, brickWidth);
         this.parent=parent;
+        this.brickWidth=brickWidth;
     }
 
     @Override
-    public void mouseClicked(MouseEvent e) {
-        //Pair p = ((Brick)e.getSource()).getPlace();
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
+    public void mouseDragged(MouseEvent e) {
 
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
+    public void mouseMoved(MouseEvent e) {
+        for(Brick[] bricks:map){
+            for(Brick b:bricks){
+                if(e.getXOnScreen()>b.getPlace().getFirst()*brickWidth
+                        && e.getXOnScreen()<(b.getPlace().getFirst()+1)*brickWidth
+                        && e.getYOnScreen()>b.getPlace().getSecond()*brickWidth
+                        && e.getYOnScreen()<(b.getPlace().getSecond()+1)*brickWidth){
+                    b.setStatus(Status.FILLED);
+                }
+            }
+        }
     }
 }

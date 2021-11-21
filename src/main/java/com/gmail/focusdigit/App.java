@@ -132,4 +132,9 @@ public class App extends JFrame implements ActionListener
             }
         });
     }
+
+    public void setMap(Brick[][] map) {
+        myMap.setMap(map);
+        this.repaint();
+    }
 }
