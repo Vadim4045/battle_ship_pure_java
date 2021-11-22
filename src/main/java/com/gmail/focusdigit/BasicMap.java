@@ -32,6 +32,9 @@ public class BasicMap extends JPanel {
 
     public void setMap(Brick[][] map) {
         this.map = map;
+        for(Brick[] bricks:this.map)
+            for(Brick brick:bricks)
+                brick.drawBrick();
         this.repaint();
     }
 }

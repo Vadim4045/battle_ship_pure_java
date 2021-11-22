@@ -62,7 +62,6 @@ public class App extends JFrame implements ActionListener
 
         this.add(centralPanel,BorderLayout.CENTER);
         this.setLocationRelativeTo(null);
-        //this.setUndecorated(true);
         this.pack();
         this.setVisible(true);
 
@@ -100,7 +99,7 @@ public class App extends JFrame implements ActionListener
 
                 break;
             case "ManualMapping":
-                EditFrame editFrame = new EditFrame(this,prop);
+                new EditFrame(this,prop);
                 break;
             case "SaveMap":
 
@@ -119,6 +118,12 @@ public class App extends JFrame implements ActionListener
         }
     }
 
+    public void setMap(Brick[][] map) {
+        myMap.setMap(map);
+        revalidate();
+        repaint();
+    }
+
     public static void main(String[] args)
     {
         final String idePath = "src/main/resources";
@@ -132,11 +137,5 @@ public class App extends JFrame implements ActionListener
                 new App();
             }
         });
-    }
-
-    public void setMap(Brick[][] map) {
-        myMap.setMap(map);
-        myMap.revalidate();
-        myMap.repaint();
     }
 }
