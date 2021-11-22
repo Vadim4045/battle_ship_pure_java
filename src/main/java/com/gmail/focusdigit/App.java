@@ -40,8 +40,9 @@ public class App extends JFrame implements ActionListener
         enemyMap = new GameMap(rows, columns, brickWidth, this);
 
         this.setSize(dimensions);
+        this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        this.setLayout(new BorderLayout(10, 10));
+        this.setLayout(new BorderLayout());
         JLabel topLabel = new JLabel("Battle ship", SwingConstants.CENTER);
         topLabel.setFont(new Font("Serif", Font.BOLD,28));
         this.add(topLabel, BorderLayout.NORTH);
@@ -135,6 +136,7 @@ public class App extends JFrame implements ActionListener
 
     public void setMap(Brick[][] map) {
         myMap.setMap(map);
-        this.repaint();
+        myMap.revalidate();
+        myMap.repaint();
     }
 }

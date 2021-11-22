@@ -6,17 +6,20 @@ import java.lang.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
-public class EditFrame extends JFrame implements ActionListener, MouseMotionListener {
+public class EditFrame extends JFrame implements ActionListener, MouseMotionListener, MouseListener {
     private final App parent;
     private int rows;
     private int columns;
-    private EditMap editMap;
+    private BasicMap editMap;
+    private Pair<Integer,Integer> mousePressXY = new Pair<Integer,Integer>(0,0);
     private ArrayList<Pair<Integer, Integer>> ships;
     private ArrayList<DraggableShip> figures;
     private ArrayList<Pair<Integer, Integer>> originalPlases;
     private  int brickWidth;
-    volatile boolean drag;
+    private static ThreadPoolExecutor fixedThreadPoolWithQueueSize;
     DraggableShip dragPanel;
 
     public EditFrame(App parent, Properties prop){
@@ -28,35 +31,74 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         columns = Integer.valueOf(prop.getProperty("conf.columns"));
         brickWidth = Integer.valueOf(prop.getProperty("conf.brickWidth"));
 
-        editMap = new EditMap(rows, columns,brickWidth,this);
-
-        int curHeight=0;
         String count;
         for(int i=10;i>0;i--){
             if((count = prop.getProperty("ship." + i))!=null) {
                 ships.add(new Pair<Integer, Integer>(i, Integer.valueOf(count)));
-                curHeight += brickWidth*(i+1);
             }
         }
-        figures = new ArrayList<>();
+
+        editMap = new BasicMap(rows, columns,brickWidth);
+        JPanel controlPanel = makeControlPanel();
+        figures = makeShipsHolder();
+        JPanel centralPanel = parseShipsOnBoard(new JPanel());
 
         this.setResizable(false);
-        this.setLayout(new BorderLayout(10,10));
+        //this.setLocationRelativeTo(null);
+        this.setLayout(new BorderLayout());
 
-        this.add(makeShipsHolder(), BorderLayout.CENTER);
-        this.add(makeControlPanel(), BorderLayout.SOUTH);
+        JLabel lbl = new JLabel("Manual board edit", JLabel.CENTER);
+        lbl.setFont(new Font("Serif", Font.BOLD,28));
+        this.add(lbl, BorderLayout.NORTH);
+        this.add(centralPanel, BorderLayout.CENTER);
+        this.add(controlPanel, BorderLayout.SOUTH);
 
+
+
+        this.setSize(centralPanel.getPreferredSize().width,
+                lbl.getPreferredSize().height
+                        +centralPanel.getPreferredSize().height
+                        + controlPanel.getPreferredSize().height);
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setAlwaysOnTop(true);
-        this.pack();
+        this.validate();
         this.setVisible(true);
+
+        fixedThreadPoolWithQueueSize = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        fixedThreadPoolWithQueueSize.setCorePoolSize(1);
+    }
+
+    private JPanel parseShipsOnBoard(JPanel panel) {
+        if(figures.size() == 0) return null;
+
+        int max=0, i=0, left = (brickWidth+1)*(columns+1), top=(brickWidth+1);
+
+        panel.setLayout(null);
+        for(int j=2;j>0;j--){
+            left = (brickWidth+1)*(columns+1);
+            for(;i<figures.size()/j;i++){
+                max = figures.get(i).getDimensios().getSecond()>max?
+                        figures.get(i).getDimensios().getSecond():max;
+
+                figures.get(i).setPlace(left,top);
+                panel.add(figures.get(i));
+                drawFigure(figures.get(i));
+                left+=2*(brickWidth+1);
+            }
+            top+=max+brickWidth+1;
+            max=0;
+        }
+        panel.add(editMap);
+        editMap.setBounds(0,0,(brickWidth+1)*columns,(brickWidth+1)*rows);
+        panel.setPreferredSize(new Dimension(left,  (brickWidth+1)*rows>top?(brickWidth+1)*rows:top));
+
+        return panel;
     }
 
     private  JPanel makeControlPanel(){
         final String[] forButton = {"Turn", "Abort", "Save", "Auto", "Return"};
         JPanel panel = new JPanel();
-
         for(int i=0;i<forButton.length;i++){
             JButton btn = new JButton(forButton[i]);
             btn.setActionCommand(forButton[i]);
@@ -64,57 +106,24 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
             btn.addActionListener(this);
             panel.add(btn);
         }
-
         return panel;
     }
 
-    private JPanel makeShipsHolder(){
+    private ArrayList<DraggableShip> makeShipsHolder(){
         if(ships.size()==0) return null;
-
-        JPanel panel = new JPanel();
-        panel.setLayout(null);
+        ArrayList<DraggableShip> list = new ArrayList<>();
 
         DraggableShip currentShip;
-        int currentTop = 0;
-        int left = (brickWidth+3)*columns;
 
         for(int i=0;i<ships.size();i++){
-            left = (brickWidth+3)*columns;
             for(int j=0;j<ships.get(i).getSecond();j++){
-                currentShip = new DraggableShip(new Pair<Integer, Integer>(left,currentTop)
-                        , ships.get(i).getFirst()
-                        , brickWidth
-                );
-                originalPlases.add(currentShip.getPlace());
-
-                left+= 2*brickWidth;
-
-                figures.add(currentShip);
-
-                currentShip.setDimensios(new Pair<Integer, Integer>((brickWidth+1)*ships.get(i).getFirst()
-                        ,brickWidth+1
-                ));
-
-                panel.add(currentShip);
-
-                currentShip.setBounds(0
-                        , 0
-                        , currentShip.getDimensios().getFirst()
-                        , currentShip.getDimensios().getSecond()
-                );
-
+                currentShip = new DraggableShip(ships.get(i).getFirst(), brickWidth);
                 currentShip.addMouseMotionListener(this);
-                currentShip.splitBounds();
+                currentShip.addMouseListener(this);
+                list.add(currentShip);
             }
-            currentTop+=(brickWidth+1)*(ships.get(i).getFirst()+1);
         }
-
-        panel.add(editMap);
-        editMap.setBounds(0,0,(brickWidth+1)*rows, (brickWidth+1)*columns);
-
-        panel.setPreferredSize(new Dimension(left+(brickWidth)
-                , currentTop>(brickWidth+1)*rows? currentTop:(brickWidth+1)*rows));
-        return panel;
+        return list;
     }
 
     @Override
@@ -122,13 +131,13 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         String com = e.getActionCommand();
         switch (com){
             case "Turn":
-                if(dragPanel!=null)dragPanel.splitBounds();
+                if(dragPanel!=null)splitFigureBounds(dragPanel);
                 break;
             case "Abort":
                 if(dragPanel!=null){
                     if(!dragPanel.isVertical()) dragPanel.splitBounds();
                     dragPanel.setPlace(originalPlases.get(figures.indexOf(dragPanel)));
-                    dragPanel.refreshMap();
+                    drawFigure(dragPanel);
                 }
                 break;
             case "Auto":
@@ -154,12 +163,12 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
                 int mapBrickX = mapBrick.getPlace().getFirst();
                 int mapBrickY = mapBrick.getPlace().getSecond();
                 for(DraggableShip d:figures){
+                    int currentFigureX = d.getPlace().getFirst()/(brickWidth+1);
+                    int currentFigureY = d.getPlace().getSecond()/(brickWidth+1);
                     for(Brick shipBrick:d.getMap()){
-                        int shipBrickX = shipBrick.getPlace().getFirst();
-                        int shipBrickY = shipBrick.getPlace().getSecond();
-                        if(Math.abs(mapBrickX-shipBrickX)<brickWidth
-                            && Math.abs(mapBrickY-shipBrickY)<brickWidth)
-                                mapBrick.setStatus(Status.FILLED);
+                        int shipBrickX = currentFigureX + shipBrick.getPlace().getFirst();
+                        int shipBrickY = currentFigureY + shipBrick.getPlace().getSecond();
+                        if(mapBrickX==shipBrickX && mapBrickY==shipBrickY) mapBrick.setStatus(Status.FILLED);
                     }
                 }
             }
@@ -168,26 +177,24 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
     }
 
     private boolean check() {
-        int mapWidth = (brickWidth+1)*columns;
-        int mapHeight = (brickWidth+1)*rows;
         for(int i=0;i<figures.size()-1;i++){
-            int checkedFigureX = figures.get(i).getPlace().getFirst();
-            int checkedFigureY = figures.get(i).getPlace().getSecond();
+            int checkedFigureX = figures.get(i).getPlace().getFirst()/(brickWidth+1);
+            int checkedFigureY = figures.get(i).getPlace().getSecond()/(brickWidth+1);
             for(int j=i+1;j<figures.size();j++){
-                int currentFigureX = figures.get(j).getPlace().getFirst();
-                int currentFigureY = figures.get(j).getPlace().getSecond();
+                int currentFigureX = figures.get(j).getPlace().getFirst()/(brickWidth+1);
+                int currentFigureY = figures.get(j).getPlace().getSecond()/(brickWidth+1);
                 for(Brick curBrick: figures.get(i).getMap()){
                     int checkedBrickX = checkedFigureX + curBrick.getPlace().getFirst();
                     int checkedBrickY = checkedFigureY + curBrick.getPlace().getSecond();
                     for(Brick b: figures.get(j).getMap()){
                         int currentBrickX = currentFigureX + b.getPlace().getFirst();
                         int currentBrickY = currentFigureY + b.getPlace().getSecond();
-                        if(checkedBrickX<0 || checkedBrickX>=mapWidth
-                                || checkedBrickY<0 || checkedBrickY>= mapHeight
-                                || currentBrickX<0 || currentBrickX>=mapWidth
-                                || currentBrickY<0 || currentBrickY>= mapHeight
-                                || (Math.abs(checkedBrickX-currentBrickX)<2*(brickWidth+1))
-                                && Math.abs(checkedBrickY-currentBrickY)<2*(brickWidth+1)){
+                        if(checkedBrickX<0 || checkedBrickX>=columns
+                                || checkedBrickY<0 || checkedBrickY>= rows
+                                || currentBrickX<0 || currentBrickX>=columns
+                                || currentBrickY<0 || currentBrickY>= rows
+                                || (Math.abs(checkedBrickX-currentBrickX)<2)
+                                && Math.abs(checkedBrickY-currentBrickY)<2){
                             return false;
                         }
                     }
@@ -197,35 +204,80 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         return true;
     }
 
-    public void setDrag(boolean drag, DraggableShip cur) {
-        this.drag = drag;
-        if(drag && cur!=null) dragPanel=cur;
+    public void splitFigureBounds(DraggableShip f){
+        f.splitBounds();
+        drawFigure(f);
     }
 
-    public boolean isDrag(){
-        return drag;
+    public void drawFigure(DraggableShip f){
+        if(f.getDimensios()!=null && f.getPlace()!=null) {
+            f.setBounds(f.getPlace().getFirst()
+                    , f.getPlace().getSecond()
+                    , f.getDimensios().getFirst()
+                    , f.getDimensios().getSecond());
+            f.drawFigure();
+        }
     }
-
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        setDrag(true, (DraggableShip) e.getSource());
-
-        dragPanel.setBounds(((e.getXOnScreen()-brickWidth)/(brickWidth+1))*(brickWidth+1)
-                , ((e.getYOnScreen()-brickWidth)/(brickWidth+1))*(brickWidth+1)
-                ,dragPanel.getDimensios().getFirst()
-                ,dragPanel.getDimensios().getSecond()
-        );
-
-        dragPanel.setPlace(
-                new Pair<Integer, Integer>(
-                        ((e.getXOnScreen()-brickWidth)/(brickWidth+1))*(brickWidth+1)
-                            , ((e.getYOnScreen()-brickWidth)/(brickWidth+1))*(brickWidth+1)
-                ));
+        fixedThreadPoolWithQueueSize.execute(new MooveTask("Drag", e));
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
+        fixedThreadPoolWithQueueSize.execute(new MooveTask("Press", e));
+    }
 
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        fixedThreadPoolWithQueueSize.execute(new MooveTask("Release", e));
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {}
+
+    @Override
+    public void mouseClicked(MouseEvent e) {}
+
+    @Override
+    public void mouseEntered(MouseEvent e) {}
+
+    @Override
+    public void mouseExited(MouseEvent e) {}
+
+    private class MooveTask implements Runnable{
+        private String comand;
+        MouseEvent e;
+
+        public MooveTask(String comand, MouseEvent e) {
+            this.comand=comand;
+            this.e=e;
+        }
+
+        @Override
+        public void run() {
+            switch (comand){
+                case "Press":
+                    dragPanel = (DraggableShip) e.getSource();
+                    mousePressXY.setFirst(e.getXOnScreen()-dragPanel.getLocation().x);
+                    mousePressXY.setSecond(e.getYOnScreen()-dragPanel.getLocation().y);
+                    break;
+                case "Drag":
+                    int left = e.getXOnScreen()-mousePressXY.getFirst();
+                    int top = e.getYOnScreen()-mousePressXY.getSecond();
+                    dragPanel.setPlace(left, top);
+                    drawFigure(dragPanel);
+                    break;
+                case "Release":
+                    if(dragPanel!=null){
+                        drawFigure(dragPanel);
+                    }
+
+                    break;
+                default:
+                    break;
+        }
+    }
     }
 }

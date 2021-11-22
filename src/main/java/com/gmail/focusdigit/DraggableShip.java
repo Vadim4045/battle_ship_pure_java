@@ -1,40 +1,31 @@
 package com.gmail.focusdigit;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 public class DraggableShip extends JPanel {
-    private boolean drag;
     private boolean vertical;
-    private int brickWith;
+    private int brickWidth;
     private Pair<Integer,Integer> place;
     private Pair<Integer,Integer> dimensios;
     private Brick[] bricks;
 
-    public DraggableShip(Pair<Integer, Integer> place, int columns, int brickWidth) {
-        this.place=place;
-        this.brickWith=brickWidth;
-        vertical=false;
-        bricks = new Brick[columns];
+    public DraggableShip(int count, int brickWidth) {
+        this.place=new Pair<Integer, Integer>(0,0);
+        this.brickWidth=brickWidth;
+        vertical=true;
+        bricks = new Brick[count];
 
         this.setLayout(null);
 
-        for(int i=0;i<columns;i++){
+        int i=0;
+        for(;i<count;i++){
             bricks[i] = new Brick(brickWidth, new Pair<Integer, Integer>(0,i));
             this.add(bricks[i]);
             bricks[i].setStatus(Status.FILLED);
         }
-        refreshMap();
-    }
-
-    public boolean isDrag() {
-        return drag;
-    }
-
-    public void setDrag(boolean drag) {
-        this.drag = drag;
+        this.setDimensios(new Pair<Integer, Integer>(brickWidth+1,
+                (brickWidth+1)*i
+        ));
     }
 
     public Pair<Integer, Integer> getPlace() {
@@ -54,47 +45,50 @@ public class DraggableShip extends JPanel {
     }
 
     public void setVertical(boolean b) {
-        this.vertical=vertical;
+        this.vertical=b;
     }
 
     public boolean isVertical() {
         return vertical;
     }
 
-    public void refreshMap(){
-
-            for(int i=0;i<bricks.length;i++) {
-                if (vertical) {
-                    bricks[i].setBounds(0, i * (brickWith + 1), brickWith + 1, brickWith + 1);
-                } else {
-                    bricks[i].setBounds(i * (brickWith + 1), 0, brickWith + 1, brickWith + 1);
-                }
-            }
-        if(dimensios!=null && place!=null) {
-            this.setBounds(place.getFirst()
-                    , place.getSecond()
-                    , dimensios.getFirst()
-                    , dimensios.getSecond());
+    public void drawFigure(){
+        for(Brick b:bricks){
+            b.setBounds(b.getPlace().getFirst()*(brickWidth+1)
+                    , b.getPlace().getSecond()*(brickWidth+1)
+                    , brickWidth+1
+                    , brickWidth+1);
         }
+        this.revalidate();
+        this.repaint();
     }
 
     //
     public   void splitBounds(){
-        int tmp = dimensios.getFirst();
-        dimensios.setFirst(dimensios.getSecond());
-        dimensios.setSecond(tmp);
+        setVertical(!this.vertical);
 
-        if(dimensios.getFirst()>dimensios.getSecond()){
-            vertical=false;
-            place.setFirst(place.getFirst()-dimensios.getFirst()/2);
-        }else {
-            vertical=true;
-            place.setFirst(place.getFirst() + dimensios.getSecond()/2);
+        int tmp = getDimensios().getFirst();
+        getDimensios().setFirst(getDimensios().getSecond());
+        getDimensios().setSecond(tmp);
+
+        for(Brick b:bricks){
+            tmp=b.getPlace().getFirst();
+            b.getPlace().setFirst(b.getPlace().getSecond());
+            b.getPlace().setSecond(tmp);
         }
-        refreshMap();
+
+        tmp = isVertical() ? getDimensios().getSecond()/2 :getDimensios().getFirst()/2;
+        int first = isVertical() ? tmp:-tmp;
+        int second = isVertical() ? -tmp:+tmp;
+        this.setPlace(getPlace().getFirst()+first,getPlace().getSecond()+second);
     }
 
     public Brick[] getMap() {
         return bricks;
+    }
+
+    public void setPlace(int left, int top) {
+        getPlace().setFirst((left/(brickWidth+1))*(brickWidth+1));
+        getPlace().setSecond((top/(brickWidth+1))*(brickWidth+1));
     }
 }

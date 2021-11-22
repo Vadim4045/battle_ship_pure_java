@@ -21,11 +21,17 @@ public class BasicMap extends JPanel {
         }
     }
 
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        this.revalidate();
+    }
+
     public Brick[][] getMap() {
         return map;
     }
 
     public void setMap(Brick[][] map) {
         this.map = map;
+        this.repaint();
     }
 }
