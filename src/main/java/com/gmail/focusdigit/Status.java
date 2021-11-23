@@ -5,6 +5,7 @@ public enum Status {
     FILLED,
     USELESS,
     USEFULL,
+    BUSSY,
     WOUNDED,
     KILLED
 }

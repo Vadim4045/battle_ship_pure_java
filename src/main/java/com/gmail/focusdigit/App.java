@@ -42,10 +42,9 @@ public class App extends JFrame implements ActionListener
         this.setSize(dimensions);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        this.setLayout(new BorderLayout());
-        JLabel topLabel = new JLabel("Battle ship", SwingConstants.CENTER);
-        topLabel.setFont(new Font("Serif", Font.BOLD,28));
-        this.add(topLabel, BorderLayout.NORTH);
+        this.setLayout(new BorderLayout(10,10));
+
+        this.add(makeTopPanel(), BorderLayout.NORTH);
         this.add(makeControlPanel(), BorderLayout.SOUTH);
 
         JPanel centralPanel = new JPanel();
@@ -70,8 +69,18 @@ public class App extends JFrame implements ActionListener
         prop.setProperty("conf.columns", String.valueOf(columns));
     }
 
+    private  JPanel makeTopPanel(){
+        JPanel panel = new JPanel();
+
+        JLabel topLabel = new JLabel("Battle ship", SwingConstants.CENTER);
+        topLabel.setFont(new Font("Serif", Font.BOLD,36));
+        panel.add(topLabel);
+
+        return panel;
+    }
+
     private  JPanel makeControlPanel(){
-        final String[] forButtons = {"AutoMapping", "ManualMapping", "SaveMap", "StartGame", "Pause"};
+        final String[] forButtons = {"Automatic mapping", "Manual mapping", "Start game", "Pause"};
         controls = new JButton[forButtons.length];
         JPanel control = new JPanel();
         for(int i=0;i<forButtons.length;i++){
@@ -95,16 +104,18 @@ public class App extends JFrame implements ActionListener
     public void actionPerformed(ActionEvent e) {
         String name = ((JButton)e.getSource()).getText();
         switch (name){
-            case "AutoMapping":
+            case "Automatic mapping":
+                myMap.empty();
+                AutomaticMapper mapper = new AutomaticMapper(this,prop);
+                for(int i=0;i<100;i++){
+                    if(mapper.map()) break;
+                }
 
                 break;
-            case "ManualMapping":
+            case "Manual mapping":
                 new EditFrame(this,prop);
                 break;
-            case "SaveMap":
-
-                break;
-            case "StartGame":
+            case "Start game":
 
                 break;
             case "":
@@ -122,6 +133,14 @@ public class App extends JFrame implements ActionListener
         myMap.setMap(map);
         revalidate();
         repaint();
+    }
+
+    public void fillBrickInMyMap(int i, int j) {
+        myMap.getMap()[j][i].setStatus(Status.FILLED);
+    }
+
+    public void infoMsgByPlace(JLabel label, String msg, int seconds){
+        utils.infoMsgByPlace(label, msg,seconds);
     }
 
     public static void main(String[] args)

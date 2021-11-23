@@ -44,7 +44,6 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         JPanel centralPanel = parseShipsOnBoard(new JPanel());
 
         this.setResizable(false);
-        //this.setLocationRelativeTo(null);
         this.setLayout(new BorderLayout());
 
         JLabel lbl = new JLabel("Manual board edit", JLabel.CENTER);
@@ -145,7 +144,7 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
                 break;
             case "Save":
                 if(check()) {
-                    parent.setMap(saveMap());
+                    saveMap();
                     this.dispose();
                 }
 
@@ -156,24 +155,15 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         }
     }
 
-    private Brick[][] saveMap() {
-        Brick[][] map = editMap.getMap();
-        for(Brick[] brick:map){
-            for(Brick mapBrick:brick){
-                int mapBrickX = mapBrick.getPlace().getFirst();
-                int mapBrickY = mapBrick.getPlace().getSecond();
-                for(DraggableShip d:figures){
-                    int currentFigureX = d.getPlace().getFirst()/(brickWidth+1);
-                    int currentFigureY = d.getPlace().getSecond()/(brickWidth+1);
-                    for(Brick shipBrick:d.getMap()){
-                        int shipBrickX = currentFigureX + shipBrick.getPlace().getFirst();
-                        int shipBrickY = currentFigureY + shipBrick.getPlace().getSecond();
-                        if(mapBrickX==shipBrickX && mapBrickY==shipBrickY) mapBrick.setStatus(Status.FILLED);
-                    }
-                }
+    private void saveMap() {
+        for(DraggableShip f:figures){
+            int currentFigureX = f.getPlace().getFirst()/(brickWidth+1);
+            int currentFigureY = f.getPlace().getSecond()/(brickWidth+1);
+            for(Brick shipBrick:f.getMap()){
+                parent.fillBrickInMyMap(currentFigureX+shipBrick.getPlace().getFirst()
+                ,currentFigureY+shipBrick.getPlace().getSecond());
             }
         }
-        return map;
     }
 
     private boolean check() {

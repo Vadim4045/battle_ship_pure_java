@@ -8,7 +8,6 @@ import java.awt.event.MouseListener;
 public class BasicMap extends JPanel {
     protected Brick[][] map;
 
-
     public BasicMap(int rows, int columns, int brickWidth){
         this.setLayout(new GridLayout(rows,columns,1,1));
         this.setPreferredSize(new Dimension((brickWidth+1)*columns, (brickWidth+1)*rows));
@@ -36,5 +35,11 @@ public class BasicMap extends JPanel {
             for(Brick brick:bricks)
                 brick.drawBrick();
         this.repaint();
+    }
+
+    public void empty() {
+        for(Brick[] bricks:map)
+            for(Brick brick:bricks)
+                brick.setStatus(Status.EMPTY);
     }
 }

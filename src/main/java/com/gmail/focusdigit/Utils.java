@@ -1,7 +1,10 @@
 package com.gmail.focusdigit;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -25,19 +28,14 @@ public class Utils {
                 .getCodeSource().getLocation()
                 .getPath());
 
-        //try {
-            if (jarFile.isFile()){
-                String path = (jarPath + "/" + name).replace("//","/").trim();
-                return ImageIO.read(getClass().getResourceAsStream(path));
-            }
-            else{
-                String path = (idePath + "/" + name).replace("//","/").trim();
-                return ImageIO.read(new File(path));
-            }
-        /*}catch(IOException ie){
-            JOptionPane.showMessageDialog(null,ie.getMessage(),"IOexception",JOptionPane.WARNING_MESSAGE);
+        if (jarFile.isFile()){
+            String path = (jarPath + "/" + name).replace("//","/").trim();
+            return ImageIO.read(getClass().getResourceAsStream(path));
         }
-        return null;*/
+        else{
+            String path = (idePath + "/" + name).replace("//","/").trim();
+            return ImageIO.read(new File(path));
+        }
     }
 
     //
@@ -57,7 +55,63 @@ public class Utils {
     //
     public Dimension getScreenDimesions(){
         return Toolkit.getDefaultToolkit().getScreenSize();
-        /*GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        return new Pair(gd.getDisplayMode().getWidth(), gd.getDisplayMode().getHeight());*/
+    }
+
+    /**
+     * Gets target(JLabel) to show message,
+     * String whith given message and period of time
+     * Invoke InfoMesegWithTimer class for start in enather thread
+     *
+     * @param label
+     * @param msg
+     * @param seconds
+     */
+    void infoMsgByPlace(final JLabel label, final String msg, final int seconds) {
+        Thread thread = new Thread(){
+            public void run(){
+                new InfoMesegWithTimer(label, msg, seconds);
+            }
+        };
+        thread.start();
+    }
+
+    /**
+     * Class for show temporary message on given target
+     * in different thread
+     */
+    class InfoMesegWithTimer {
+        Timer timer;
+        String msg, oldMsg;
+        JLabel label;
+
+        /**
+         * Show given message on given target by given period time
+         *
+         * @param label
+         * @param msg
+         * @param seconds
+         */
+        InfoMesegWithTimer(JLabel label, String msg, int seconds) {
+            this.msg=msg;
+            this.label=label;
+            timer = new Timer();
+            oldMsg = label.getText();
+            label.setText(msg);
+            label.revalidate();
+            label.repaint();
+            timer.schedule(new RemindTask(), seconds*1000);
+        }
+
+        /**
+         * Scheduler for return old message on target after given period time
+         */
+        class RemindTask extends TimerTask {
+            public void run() {
+                label.setText(oldMsg);
+                label.revalidate();
+                label.repaint();
+                timer.cancel();
+            }
+        }
     }
 }
