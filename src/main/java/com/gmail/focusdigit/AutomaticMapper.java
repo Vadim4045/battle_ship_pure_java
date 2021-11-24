@@ -18,7 +18,6 @@ public class AutomaticMapper {
         this.parent=parent;
         ran = new Random();
         ships = new ArrayList<>();
-
         String count;
         for(int i=10;i>0;i--)
             if((count = prop.getProperty("ship." + i))!=null)
@@ -29,9 +28,11 @@ public class AutomaticMapper {
 
     }
 
-    public  boolean map(){
+    public  ArrayList<int[]> map(){
+        ArrayList<int[]> set = new ArrayList<>();
         for(int offer = 0;offer<100;offer++){
             map=new Status[rows][columns];
+            set.clear();
 
             for(int i=0;i<rows;i++)
                 for(int j=0;j<columns;j++)
@@ -43,9 +44,13 @@ public class AutomaticMapper {
 
             for(Pair<Integer, Integer> p:ships){
                 int step=0;
+
                 for(int i = 0;i < p.getSecond(); i++){
                     for(int setF = 0;setF<100;setF++) {
-                        if (setFigure(p.getFirst())){
+                        int[] ship=null;
+                        if (cells.size()>0) ship = setFigure(p.getFirst());
+                        if (ship!=null){
+                            set.add(ship);
                             step++;
                             break;
                         }
@@ -55,26 +60,20 @@ public class AutomaticMapper {
 
             }
 
-            if(mapped==ships.size()){
-                for(int i=0;i<rows;i++)
-                    for(int j=0;j<columns;j++)
-                        if(map[i][j]==Status.FILLED) parent.fillBrickInMyMap(i,j);
-                return true;
-            }
+            if(mapped==ships.size()) return set;
         }
-        return false;
+        return null;
     }
 
-    private boolean setFigure(int bricks){
+    private int[] setFigure(int bricks){
         int[] numbers = new int[bricks];
-
         numbers[0] = cells.get(ran.nextInt(cells.size()));
 
-        if(ran.nextInt(100)>50)
-            if(setVertical(bricks,  numbers))return true;
+        if(ran.nextInt(10)%2!=0)
+            if(setVertical(bricks,  numbers))return numbers;
         else
-            if(setGorizontal(bricks, numbers))return true;
-        return false;
+            if(setGorizontal(bricks, numbers))return numbers;
+        return null;
     }
 
     private boolean setVertical(int bricks, int[]numbers){
@@ -82,7 +81,6 @@ public class AutomaticMapper {
         int count = 0;
         for(;i<bricks;i++){
             int cur = numbers[0]+columns*i;
-            if(numbers[0]/columns!=cur%columns) break;
             if(checkCell(cur)){
                 numbers[i]=cur;
                 count++;
@@ -90,7 +88,6 @@ public class AutomaticMapper {
         }
         for(int j=1;j<bricks-i;j++){
             int cur = numbers[0]-columns*j;
-            if(numbers[0]/columns!=cur%columns) break;
             if(checkCell(cur)){
                 numbers[i+j]=cur;
                 count++;

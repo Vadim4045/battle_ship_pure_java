@@ -1,46 +1,33 @@
 package com.gmail.focusdigit;
 
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.util.ArrayList;
 
-public class GameMap extends BasicMap implements MouseListener {
-    App parent;
+public class GameMap extends BasicMap {
+    ArrayList<int[]> statusMap;
 
-    public GameMap(int rows, int columns, int brickWidth, App parent){
-        super(rows,columns,brickWidth);
-        this.parent=parent;
-        for(Brick[] bricks:map)
-            for(Brick b:bricks)
-                b.addMouseListener(this);
+    public GameMap(int rows, int columns, int brickWidth, int hide){
+        super(rows,columns,brickWidth, hide);
     }
 
-    public void setBrick(Pair<Integer, Integer> place, Status status){
-        getBrick(place).setStatus(status);
+    public void fillMyMap(ArrayList<int[]> statusMap){
+        this.statusMap=statusMap;
+        for(int[] curShip:statusMap)
+            for(int num:curShip)
+                getMap()[num/map[0].length][num%map[0].length].setStatus(Status.FILLED);
     }
 
-    private Brick getBrick(Pair<Integer, Integer> place) {
-        return this.map[place.getFirst()][place.getSecond()];
+    public ArrayList<int[]> getStatusMap() {
+        return statusMap;
     }
 
-    public void refresh(){
-        this.revalidate();
-        this.repaint();
-    }
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        Pair p = ((Brick)e.getSource()).getPlace();
-        parent.nextStep(p, this);
+    public void setStatusMap(ArrayList<int[]> statusMap) {
+        this.statusMap = statusMap;
     }
 
-    @Override
-    public void mousePressed(MouseEvent e) {}
-
-    @Override
-    public void mouseReleased(MouseEvent e) {}
-
-    @Override
-    public void mouseEntered(MouseEvent e) {}
-
-    @Override
-    public void mouseExited(MouseEvent e) {}
+    public Status getShot(Pair<Integer, Integer> goal) {
+        Brick b = getBrick(goal);
+        if(b.getStatus()==Status.EMPTY) b.setStatus(Status.SHOTED);
+        if(b.getStatus()==Status.FILLED) b.setStatus(Status.KILLED);
+        return b.getStatus();
+    }
 }

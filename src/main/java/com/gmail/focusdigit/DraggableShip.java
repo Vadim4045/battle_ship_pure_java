@@ -22,6 +22,7 @@ public class DraggableShip extends JPanel {
             bricks[i] = new Brick(brickWidth, new Pair<Integer, Integer>(0,i));
             this.add(bricks[i]);
             bricks[i].setStatus(Status.FILLED);
+            bricks[i].setMode(3);
         }
         this.setDimensios(new Pair<Integer, Integer>(brickWidth+1,
                 (brickWidth+1)*i

@@ -38,7 +38,7 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
             }
         }
 
-        editMap = new BasicMap(rows, columns,brickWidth);
+        editMap = new BasicMap(rows, columns,brickWidth, 3);
         JPanel controlPanel = makeControlPanel();
         figures = makeShipsHolder();
         JPanel centralPanel = parseShipsOnBoard(new JPanel());
@@ -90,7 +90,8 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
         }
         panel.add(editMap);
         editMap.setBounds(0,0,(brickWidth+1)*columns,(brickWidth+1)*rows);
-        panel.setPreferredSize(new Dimension(left,  (brickWidth+1)*rows>top?(brickWidth+1)*rows:top));
+        top = (brickWidth+1)*rows>top?(brickWidth+1)*rows:top;
+        panel.setPreferredSize(new Dimension(left, top+brickWidth));
 
         return panel;
     }
@@ -140,7 +141,8 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
                 }
                 break;
             case "Auto":
-
+                    parent.autoMap();
+                    this.dispose();
                 break;
             case "Save":
                 if(check()) {
@@ -156,14 +158,18 @@ public class EditFrame extends JFrame implements ActionListener, MouseMotionList
     }
 
     private void saveMap() {
+        ArrayList<int[]> statusMap = new ArrayList<>();
         for(DraggableShip f:figures){
             int currentFigureX = f.getPlace().getFirst()/(brickWidth+1);
             int currentFigureY = f.getPlace().getSecond()/(brickWidth+1);
-            for(Brick shipBrick:f.getMap()){
-                parent.fillBrickInMyMap(currentFigureX+shipBrick.getPlace().getFirst()
-                ,currentFigureY+shipBrick.getPlace().getSecond());
+            int[] curArray = new int[f.getMap().length];
+            for(int i=0;i<curArray.length;i++){
+                curArray[i]=(f.getMap()[i].getPlace().getFirst()+currentFigureX)
+                        + (f.getMap()[i].getPlace().getSecond()+currentFigureY)*columns;
             }
+            statusMap.add(curArray);
         }
+        parent.fillMyMap(statusMap, null);
     }
 
     private boolean check() {
